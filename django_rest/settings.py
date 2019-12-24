@@ -119,7 +119,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# redis connection
 from decouple import config
+from redis import StrictRedis
+
 
 REDIS_HOST = config('REDIS_HOST')
 REDIS_PORT = config('REDIS_PORT')
+
+REDIS_DB = StrictRedis(REDIS_HOST, REDIS_PORT, decode_responses=True)
