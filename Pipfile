@@ -8,6 +8,7 @@ name = "pypi"
 [packages]
 djangorestframework = "*"
 django = "==2.2"
+python-decouple = "*"
 
 [requires]
 python_version = "3.6"
