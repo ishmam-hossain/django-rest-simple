@@ -1,13 +1,16 @@
-from django.conf import settings
+from redis.exceptions import RedisError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.utils import (get_key,
+                          set_ttl,
+                          reset_ttl,
+                          set_redis_data,
                           get_redis_data,
-                          string_splitter, )
-
-redb = settings.REDIS_DB
+                          string_to_dict,
+                          string_splitter,
+                          get_common_prefix_redis_keys)
 
 
 class ValuesAPIView(APIView):
@@ -17,15 +20,22 @@ class ValuesAPIView(APIView):
         key_args = self.request.GET.get('keys')
 
         if key_args:
-            all_keys = string_splitter(
-                source_str=key_args,
-                split_by=',',
-                prefix=self.PREFIX
-            )   # list -> iterable
+            all_keys = string_splitter(source_str=key_args,
+                                       split_by=',',
+                                       prefix=self.PREFIX)          # list object -> iterable
         else:
-            all_keys = redb.scan_iter(f"{self.PREFIX}*")    # generator object -> iterable
+            all_keys = get_common_prefix_redis_keys(self.PREFIX)    # generator object -> iterable
 
-        response = {get_key(key): get_redis_data(redb=redb, key=key) for key in all_keys}
+        # response = {get_key(key): get_redis_data(key=key) for key in all_keys}
+
+        response = dict()
+        for key in all_keys:
+            key_data = get_redis_data(key=key)
+            if key_data:
+                response_key = get_key(key)
+                response[response_key] = key_data
+
+            reset_ttl(key)
 
         return Response(
             {
@@ -37,21 +47,23 @@ class ValuesAPIView(APIView):
         )
 
     def post(self, request):
-        from ast import literal_eval
-        data = literal_eval(self.request.body.decode())
-        insert_prefix = 'values'
+        time_to_live = 10   # seconds
+        data = string_to_dict(self.request.body)
 
         for key in data:
             try:
-                redb.set(f"{insert_prefix}_{key}", data[key])
-            except Exception as e:
+                insert_key = f"{self.PREFIX}_{key}"
+                set_redis_data(key=insert_key, value=data[key])
+                set_ttl(key=insert_key, time_to_live=time_to_live)
+
+            except (RedisError, Exception) as e:
                 print(e)
 
         return Response(
             {
-                "status": "ok",
-                "message": "success",
-            }
+                "status": "success"
+            },
+            status=status.HTTP_201_CREATED
         )
 
     def patch(self, request):
