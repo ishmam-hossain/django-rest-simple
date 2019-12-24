@@ -26,14 +26,11 @@ class ValuesAPIView(APIView):
         else:
             all_keys = get_common_prefix_redis_keys(self.PREFIX)    # generator object -> iterable
 
-        # response = {get_key(key): get_redis_data(key=key) for key in all_keys}
-
         response = dict()
         for key in all_keys:
-            key_data = get_redis_data(key=key)
+            key_data = get_redis_data(key)
             if key_data:
-                response_key = get_key(key)
-                response[response_key] = key_data
+                response[get_key(key)] = key_data
 
             reset_ttl(key)
 
@@ -49,6 +46,7 @@ class ValuesAPIView(APIView):
     def post(self, request):
         time_to_live = 10   # seconds
         data = string_to_dict(self.request.body)
+        errors = []
 
         for key in data:
             try:
@@ -57,11 +55,12 @@ class ValuesAPIView(APIView):
                 set_ttl(key=insert_key, time_to_live=time_to_live)
 
             except (RedisError, Exception) as e:
-                print(e)
+                errors.append(f"{key} -> {e}")
 
         return Response(
             {
-                "status": "success"
+                "status": "success",
+                "errors": errors if errors else None
             },
             status=status.HTTP_201_CREATED
         )
@@ -69,3 +68,4 @@ class ValuesAPIView(APIView):
     def patch(self, request):
         pass
 
+#   TODO: make these for arbitrary length data
