@@ -42,6 +42,7 @@ class ValuesAPIView(APIView):
     def post(self, request):
         data = self.request.data
         errors = []
+        success_count = 0
 
         for key in data:
             insert_key = f"{self.PREFIX}:{key}"
@@ -50,12 +51,15 @@ class ValuesAPIView(APIView):
                 set_redis_data(key=insert_key, value=data[key])
                 set_ttl(key=insert_key, time_to_live=self.TTL)
 
+                success_count += 1
+
             except (RedisError, Exception) as e:
                 errors.append(f"{key} -> {e}")
 
         return Response(
             {
                 "status": "success",
+                "message": f"successfully inserted {success_count} keys.",
                 "errors": errors
             },
             status=status.HTTP_201_CREATED
@@ -64,6 +68,7 @@ class ValuesAPIView(APIView):
     @valid_request
     def patch(self, request):
         data = self.request.data
+        success_count = 0
         not_found = []
         errors = []
 
@@ -75,6 +80,8 @@ class ValuesAPIView(APIView):
                     set_redis_data(key=update_key, value=data[key])
                     set_ttl(key=update_key, time_to_live=self.TTL)
 
+                    success_count += 1
+
                 except (RedisError, Exception) as e:
                     errors.append(e)
             else:
@@ -83,10 +90,9 @@ class ValuesAPIView(APIView):
         return Response(
             {
                 "status": "success",
+                "message": f"successfully updated {success_count} keys.",
                 "not_found": not_found,
                 "errors": errors
             },
             status=status.HTTP_200_OK
         )
-
-# TODO: add appropriate message
