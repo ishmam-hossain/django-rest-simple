@@ -123,8 +123,7 @@ STATIC_URL = '/static/'
 from decouple import config
 from redis import StrictRedis
 
-
-REDIS_HOST = config('REDIS_HOST')
-REDIS_PORT = config('REDIS_PORT')
+REDIS_HOST = config('REDIS_HOST', 'localhost')
+REDIS_PORT = config('REDIS_PORT', 6379)
 
 REDIS_DB = StrictRedis(REDIS_HOST, REDIS_PORT, decode_responses=True)
