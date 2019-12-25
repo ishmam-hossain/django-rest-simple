@@ -1,4 +1,5 @@
 from ast import literal_eval
+
 from common import redb
 
 
@@ -9,7 +10,7 @@ def get_common_prefix_redis_keys(prefix):
 def string_splitter(source_str: str, split_by: str, prefix=None) -> list:
     split_list = source_str.split(split_by)
     if prefix:
-        return [f"{prefix}_{val}" for val in split_list]
+        return [f"{prefix}:{val}" for val in split_list]
     return split_list
 
 

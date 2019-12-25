@@ -2,6 +2,7 @@ from redis.exceptions import RedisError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from common.utils import (get_key,
                           set_ttl,
                           reset_ttl,
@@ -14,22 +15,24 @@ from common.utils import (get_key,
 
 class ValuesAPIView(APIView):
     PREFIX = "values"
-    TTL = 10
+    TTL = 30
 
     @staticmethod
     def get_response_and_reset_ttl(all_keys):
         _response = dict()
+        _not_found = []
 
         for key in all_keys:
             key_data = get_redis_data(key)
+
             if key_data:
                 _response[get_key(key)] = key_data
-
-            # TODO: add support for keys not found
+            else:
+                _not_found.append(get_key(key))
 
             reset_ttl(key)
 
-        return _response
+        return _response, _not_found
 
     def get(self, request):
         key_args = self.request.GET.get('keys')
@@ -41,13 +44,14 @@ class ValuesAPIView(APIView):
         else:
             all_keys = get_common_prefix_redis_keys(self.PREFIX)    # generator object -> iterable
 
-        response = self.get_response_and_reset_ttl(all_keys)
+        response, not_found = self.get_response_and_reset_ttl(all_keys)
 
         return Response(
             {
                 "status": "success",
                 "total": len(response),
-                "data": response
+                "data": response,
+                "not_found": not_found
             },
             status=status.HTTP_200_OK
         )
@@ -57,8 +61,9 @@ class ValuesAPIView(APIView):
         errors = []
 
         for key in data:
+            insert_key = f"{self.PREFIX}:{key}"
+
             try:
-                insert_key = f"{self.PREFIX}:{key}"
                 set_redis_data(key=insert_key, value=data[key])
                 set_ttl(key=insert_key, time_to_live=self.TTL)
 
@@ -68,14 +73,14 @@ class ValuesAPIView(APIView):
         return Response(
             {
                 "status": "success",
-                "errors": errors if errors else None
+                "errors": errors
             },
             status=status.HTTP_201_CREATED
         )
 
     def patch(self, request):
         data = self.request.data
-        missing_keys = []
+        not_found = []
         errors = []
 
         for key in data:
@@ -88,15 +93,15 @@ class ValuesAPIView(APIView):
                 except (RedisError, Exception) as e:
                     errors.append(e)
             else:
-                missing_keys.append(key)
+                not_found.append(key)
 
         return Response(
             {
                 "status": "success",
-                "missing_keys": missing_keys,
-                "errors": errors if errors else None
+                "not_found": not_found,
+                "errors": errors
             },
             status=status.HTTP_200_OK
         )
 
-# TODO: add approriate message
+# TODO: add appropriate message
