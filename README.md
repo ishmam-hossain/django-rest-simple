@@ -1,7 +1,7 @@
 # django-rest-telenor
 
 ## clone
-`git clone https://github.com/ishmam-hossain/django-rest-telenor.git`
+> `git clone https://github.com/ishmam-hossain/django-rest-telenor.git`
 
 ### single command run
 > `python manage.py runapi`
