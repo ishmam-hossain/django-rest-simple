@@ -2,7 +2,6 @@ from redis.exceptions import RedisError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from common.utils import (get_key,
                           set_ttl,
                           reset_ttl,
@@ -75,4 +74,4 @@ class ValuesAPIView(APIView):
     def patch(self, request):
         pass
 
-#   TODO: make these for arbitrary length data
+#   TODO: make these for arbitrary length data then literal eval while GET

@@ -1,5 +1,4 @@
 from ast import literal_eval
-
 from common import redb
 
 
@@ -22,16 +21,28 @@ def get_redis_data(key: str) -> str:
     return redb.get(key)
 
 
+def isiterable(val):
+    if isinstance(val, dict) or isinstance(val, list):
+        return True
+    return
+
+
+def set_redis_iterable_data(key, value) -> None:
+    return redb.set(key, str(value))
+
+
 def set_redis_data(key: str, value: str) -> None:
-    redb.set(key, value)
+    if isiterable(value):
+        return set_redis_iterable_data(key, value)
+    return redb.set(key, value)
 
 
 def set_ttl(key: str, time_to_live: int = 5) -> None:
-    redb.expire(key, time_to_live)
+    return redb.expire(key, time_to_live)
 
 
 def reset_ttl(key):
-    set_ttl(key)
+    return set_ttl(key)
 
 
 def string_to_dict(data: bytes) -> str:
