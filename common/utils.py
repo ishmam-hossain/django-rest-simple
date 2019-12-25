@@ -37,6 +37,10 @@ def set_redis_data(key: str, value: str) -> None:
     return redb.set(key, value)
 
 
+def key_in_redis(key: str) -> str:
+    return redb.exists(key) == 1
+
+
 def set_ttl(key: str, time_to_live: int = 5) -> None:
     return redb.expire(key, time_to_live)
 
