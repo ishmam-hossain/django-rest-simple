@@ -15,7 +15,7 @@ def string_splitter(source_str: str, split_by: str, prefix=None) -> list:
 
 
 def get_key(key: str) -> str:
-    return string_splitter(key, '_')[1]
+    return string_splitter(key, ':')[1]
 
 
 def get_redis_data(key: str) -> str:

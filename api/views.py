@@ -16,6 +16,19 @@ from common.utils import (get_key,
 class ValuesAPIView(APIView):
     PREFIX = "values"
 
+    @staticmethod
+    def get_response_and_reset_ttl(all_keys):
+        _response = dict()
+
+        for key in all_keys:
+            key_data = get_redis_data(key)
+            if key_data:
+                _response[get_key(key)] = key_data
+
+            reset_ttl(key)
+
+        return _response
+
     def get(self, request):
         key_args = self.request.GET.get('keys')
 
@@ -26,13 +39,7 @@ class ValuesAPIView(APIView):
         else:
             all_keys = get_common_prefix_redis_keys(self.PREFIX)    # generator object -> iterable
 
-        response = dict()
-        for key in all_keys:
-            key_data = get_redis_data(key)
-            if key_data:
-                response[get_key(key)] = key_data
-
-            reset_ttl(key)
+        response = self.get_response_and_reset_ttl(all_keys)
 
         return Response(
             {
@@ -50,7 +57,7 @@ class ValuesAPIView(APIView):
 
         for key in data:
             try:
-                insert_key = f"{self.PREFIX}_{key}"
+                insert_key = f"{self.PREFIX}:{key}"
                 set_redis_data(key=insert_key, value=data[key])
                 set_ttl(key=insert_key, time_to_live=time_to_live)
 
