@@ -54,4 +54,18 @@ def string_to_dict(data: bytes) -> str:
     return literal_eval(data.decode())
 
 
+def get_response_and_reset_ttl(all_keys):
+    _response = dict()
+    _not_found = []
 
+    for key in all_keys:
+        key_data = get_redis_data(key)
+
+        if key_data:
+            _response[get_key(key)] = key_data
+        else:
+            _not_found.append(get_key(key))
+
+        reset_ttl(key)
+
+    return _response, _not_found

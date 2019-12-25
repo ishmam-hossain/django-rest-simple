@@ -3,36 +3,18 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.utils import (get_key,
-                          set_ttl,
-                          reset_ttl,
+from common.decorators import valid_request
+from common.utils import (set_ttl,
                           set_redis_data,
-                          get_redis_data,
                           key_in_redis,
                           string_splitter,
-                          get_common_prefix_redis_keys)
+                          get_common_prefix_redis_keys,
+                          get_response_and_reset_ttl)
 
 
 class ValuesAPIView(APIView):
     PREFIX = "values"
-    TTL = 30
-
-    @staticmethod
-    def get_response_and_reset_ttl(all_keys):
-        _response = dict()
-        _not_found = []
-
-        for key in all_keys:
-            key_data = get_redis_data(key)
-
-            if key_data:
-                _response[get_key(key)] = key_data
-            else:
-                _not_found.append(get_key(key))
-
-            reset_ttl(key)
-
-        return _response, _not_found
+    TTL = 5 * 60    # 5 minutes TTL
 
     def get(self, request):
         key_args = self.request.GET.get('keys')
@@ -44,7 +26,7 @@ class ValuesAPIView(APIView):
         else:
             all_keys = get_common_prefix_redis_keys(self.PREFIX)    # generator object -> iterable
 
-        response, not_found = self.get_response_and_reset_ttl(all_keys)
+        response, not_found = get_response_and_reset_ttl(all_keys)
 
         return Response(
             {
@@ -56,6 +38,7 @@ class ValuesAPIView(APIView):
             status=status.HTTP_200_OK
         )
 
+    @valid_request
     def post(self, request):
         data = self.request.data
         errors = []
@@ -78,6 +61,7 @@ class ValuesAPIView(APIView):
             status=status.HTTP_201_CREATED
         )
 
+    @valid_request
     def patch(self, request):
         data = self.request.data
         not_found = []
@@ -90,6 +74,7 @@ class ValuesAPIView(APIView):
                 try:
                     set_redis_data(key=update_key, value=data[key])
                     set_ttl(key=update_key, time_to_live=self.TTL)
+
                 except (RedisError, Exception) as e:
                     errors.append(e)
             else:
