@@ -10,9 +10,10 @@ import signal
 class Command(BaseCommand):
     help = 'Single command app start'
     commands = [
+        'pip install -r requirements.txt',
+        'redis-server',
         'python manage.py makemigrations',
         'python manage.py migrate',
-        'redis-server',
         'python manage.py runserver',
 
     ]
