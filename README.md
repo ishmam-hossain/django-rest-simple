@@ -7,7 +7,7 @@
 > `python manage.py runapi`
 
 
-This command will install all the dependencies and run the the server at `Port` `8000`.
+This command will install all the dependencies listed in `requirements.txt` and run the the server at `Port` `8000` after running the commands below-
 <br>
 
         pip install -r requirements.txt
@@ -30,6 +30,11 @@ if `.env` file is not found then by default the app will connect to `localhost` 
 ### API
 All routes must be prefixed with `/api`
 >   `localhost:8000/api/values`
+
+
+* All data types are supported, e.g., `list`, `dictionary`, `str`, `int`, `float`.
+* `not_found` is a list of asked keys in `GET` & `PATCH` which are not in the database or have expired.
+
 
 ###### GET /values
 Returns all the key-values in dictionary form in the key `data` along with other information & `resets ttl` for all keys.
