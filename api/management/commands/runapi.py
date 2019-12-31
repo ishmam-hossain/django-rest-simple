@@ -3,8 +3,6 @@ from django.core.management.base import BaseCommand
 from subprocess import Popen
 from sys import stdout, stdin, stderr
 import time
-import os
-import signal
 
 
 class Command(BaseCommand):
@@ -22,13 +20,15 @@ class Command(BaseCommand):
         process_list = []
 
         for command in self.commands:
-            self.stdout.write(self.style.SUCCESS(f"executing# {command}"))
+            self.stdout.write(self.style.SUCCESS(f"#executing --> {command}"))
             process = Popen(command, shell=True, stdin=stdin, stdout=stdout, stderr=stderr)
+            process.wait()
             process_list.append(process)
 
         try:
             while True:
-                time.sleep(10)
+                time.sleep(1)
         except KeyboardInterrupt:
             for process in process_list:
-                os.kill(process.pid, signal.SIGKILL)
+                process.kill()
+
