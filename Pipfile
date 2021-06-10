@@ -9,7 +9,7 @@ name = "pypi"
 djangorestframework = "*"
 python-decouple = "*"
 redis = "*"
-django = "==2.2.8"
+django = "==2.2.24"
 
 [requires]
 python_version = "3.6"
